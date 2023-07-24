@@ -1,9 +1,7 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using NBomber.CSharp;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
-SemaphoreSlim _semaphore = new(1);
 ConcurrentDictionary<string, string> cache = new();
 ConcurrentDictionary<string, bool> isExpiredDictionary = new();
 
@@ -47,29 +45,6 @@ async Task<string> GetOrSetAsyncSemaphoreDic(string key)
     return (await GetAsync(key))!;
 }
 
-async Task<string> GetOrSetAsyncSemaphore(string key)
-{
-    var isExpired = IsExpired(key);
-    if (!isExpired) await GetAsync(key);
-
-    await _semaphore.WaitAsync();
-    try
-    {
-        isExpired = IsExpired(key);
-
-        if (isExpired)
-        {
-            return await SetAsync(key);
-        }
-    }
-    finally
-    {
-        _semaphore.Release();
-    }
-
-    return (await GetAsync(key))!;
-}
-
 async Task<string?> GetAsync(string key)
 {
     return cache.TryGetValue(key, out var value) ? value : null;
@@ -104,27 +79,6 @@ async Task<string> GetValue()
     return Guid.NewGuid().ToString();
 }
 
-var getOrSetAsyncSemaphoreDic = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
-    {
-        Task.WaitAll(
-            GetOrSetAsyncSemaphoreDic("1"),
-            GetOrSetAsyncSemaphoreDic("2"),
-            GetOrSetAsyncSemaphoreDic("3"),
-            GetOrSetAsyncSemaphoreDic("4"),
-            GetOrSetAsyncSemaphoreDic("5")
-        );
-        
-        if (counter == 250)
-        {
-            isExpiredDictionary.Clear();
-            cache.Clear();
-            counter = 0;
-        }
-
-        counter++;
-        return Response.Ok();
-    }).WithoutWarmUp()
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
 var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
     {
@@ -149,16 +103,16 @@ var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
     }).WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
-var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphore", async _ =>
+var getOrSetAsyncSemaphoreDic = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
     {
         Task.WaitAll(
-            GetOrSetAsyncSemaphore("11"),
-            GetOrSetAsyncSemaphore("12"),
-            GetOrSetAsyncSemaphore("13"),
-            GetOrSetAsyncSemaphore("14"),
-            GetOrSetAsyncSemaphore("15")
+            GetOrSetAsyncSemaphoreDic("1"),
+            GetOrSetAsyncSemaphoreDic("2"),
+            GetOrSetAsyncSemaphoreDic("3"),
+            GetOrSetAsyncSemaphoreDic("4"),
+            GetOrSetAsyncSemaphoreDic("5")
         );
-
+        
         if (counter == 250)
         {
             isExpiredDictionary.Clear();
@@ -167,68 +121,13 @@ var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphore", async _ =
         }
 
         counter++;
-
         return Response.Ok();
     }).WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
-var sw = new Stopwatch();
-//
-// sw.Start();
-// await Task.WhenAll(GetOrSetAsyncOld("111"), GetOrSetAsyncOld("111"), GetOrSetAsyncOld("111"));
-// sw.Stop();
-// Console.WriteLine(sw.ElapsedMilliseconds);
-// isExpiredDictionary.Clear();
-// sw.Reset();
-//
-// sw.Start();
-// await Task.WhenAll(GetOrSetAsyncSemaphore("111"), GetOrSetAsyncSemaphore("111"), GetOrSetAsyncSemaphore("111"));
-// sw.Stop();
-// Console.WriteLine(sw.ElapsedMilliseconds);
-// isExpiredDictionary.Clear();
-// sw.Reset();
-//
-// sw.Start();
-// await Task.WhenAll(GetOrSetAsyncSemaphoreDic("111"), GetOrSetAsyncSemaphoreDic("111"), GetOrSetAsyncSemaphoreDic("111"));
-// sw.Stop();
-// Console.WriteLine(sw.ElapsedMilliseconds);
-// isExpiredDictionary.Clear();
-// sw.Reset();
-
-// sw.Start();
-// for (var i = 0; i < 5; i++)
-// {
-//     await GetOrSetAsyncOld(i.ToString());
-// }
-// for (var i = 0; i < 5; i++)
-// {
-//     await GetOrSetAsyncOld(i.ToString());
-// }
-// sw.Stop();
-// Console.WriteLine(sw.ElapsedMilliseconds);
-// isExpiredDictionary.Clear();
-// cache.Clear();
-// sw.Reset();
-//
-// sw.Start();
-// for (var i = 0; i < 5; i++)
-// {
-//     await GetOrSetAsyncSemaphoreDic(i.ToString());
-// }
-// for (var i = 0; i < 5; i++)
-// {
-//     await GetOrSetAsyncSemaphoreDic(i.ToString());
-// }
-// sw.Stop();
-// Console.WriteLine(sw.ElapsedMilliseconds);
-// isExpiredDictionary.Clear();
-// cache.Clear();
-// sw.Reset();
-
 NBomberRunner
     .RegisterScenarios(
         //getOrSetAsyncOld //как есть
-        // getOrSetAsyncSemaphore
         getOrSetAsyncSemaphoreDic //как будет
     )
     .Run();
