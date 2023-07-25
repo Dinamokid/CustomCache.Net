@@ -3,7 +3,7 @@ using NBomber.CSharp;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
-ConcurrentDictionary<string, object> cacheLazy = new();
+ConcurrentDictionary<string, Lazy<string>> newCacheLazy = new();
 ConcurrentDictionary<string, bool> isExpiredDictionary = new();
 
 bool IsExpired(string key) => !isExpiredDictionary.TryGetValue(key, out _);
@@ -16,65 +16,11 @@ async Task<string?> GetAsync(string key)
     return cache.TryGetValue(key, out var value) ? value : null;
 }
 
-async Task<string?>? GetLazyAsync(string key)
-{
-    var newLazyValue = new Lazy<Task<string>>(GetValue, LazyThreadSafetyMode.ExecutionAndPublication);
-    object lazyValue = null;
-    try
-    {
-        // Получаем лок на вызов valueFactory
-        lazyValue = cacheLazy.GetOrAdd(key, newLazyValue);
-
-        // Ждем, пока выполнится valueFactory.
-        // Так как это Lazy, то valueFactory вызовется только один раз,
-        // независимо от того, сколько потоков одновременно пытаются получить результат
-        var value = await ((Lazy<Task<string>>) lazyValue).Value;
-        if (cacheLazy.TryGetValue(key, out var current) && ReferenceEquals(current, newLazyValue))
-        {
-            SetLazy(key, value);
-            return value;
-        }
-        else
-        {
-            // Если из _factoryCalls мы достали другое значние, а не newLazyValue
-            // это значит, в другом потоке тоже был вызван метод SetAsync для этого же ключа.
-            // Поэтому мы просто возвращаем значение, а в кэш значение положит другой поток.
-            return value;
-        }
-    }
-    finally
-    {
-        if (ReferenceEquals(newLazyValue, lazyValue))
-        {
-            cacheLazy.TryRemove(key, out lazyValue);
-        }
-    }
-}
-
 async Task<string> SetAsync(string key)
 {
     var value = await GetValue();
 
     cache[key] = value;
-    isExpiredDictionary.TryAdd(key, true);
-
-    return value;
-}
-
-async Task<string> SetLazyAsync(string key)
-{
-    var value = await GetValue();
-    
-    cacheLazy[key] = value;
-    cache[key] = value;
-    isExpiredDictionary.TryAdd(key, true);
-
-    return value;
-}
-
-string SetLazy(string key, string value)
-{
-    cacheLazy[key] = value;
     isExpiredDictionary.TryAdd(key, true);
 
     return value;
@@ -127,12 +73,11 @@ async Task<string> GetOrSetAsyncSemaphoreDic(string key)
     return (await GetAsync(key))!;
 }
 
-async Task<string> GetOrSetAsyncLazy(string key)
+async Task<string> GetOrSetNewLazy(string key)
 {
-    if (!cache.TryGetValue(key, out var value))
-    {
-        value = await GetLazyAsync(key) ?? await SetLazyAsync(key);
-    }
+    var value = newCacheLazy
+        .GetOrAdd(key, _ => new Lazy<string>(() => GetValue().Result, LazyThreadSafetyMode.ExecutionAndPublication))
+        .Value;
 
     return value;
 }
@@ -189,20 +134,19 @@ var getOrSetAsyncSemaphoreDic = Scenario.Create("GetOrSetAsyncSemaphoreDic", asy
     }).WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
-var getOrSetAsyncLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
+var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
     {
         Task.WaitAll(
-            GetOrSetAsyncLazy("1"),
-            GetOrSetAsyncLazy("2"),
-            GetOrSetAsyncLazy("3"),
-            GetOrSetAsyncLazy("4"),
-            GetOrSetAsyncLazy("5")
+            GetOrSetNewLazy("1"),
+            GetOrSetNewLazy("2"),
+            GetOrSetNewLazy("3"),
+            GetOrSetNewLazy("4"),
+            GetOrSetNewLazy("5")
         );
         
         if (counter == 250)
         {
-            cache.Clear();
-            cacheLazy.Clear();
+            newCacheLazy.Clear();
             counter = 0;
         }
 
@@ -215,9 +159,9 @@ var getOrSetAsyncLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
 
 NBomberRunner
     .RegisterScenarios(
-         getOrSetAsyncOld //как есть
-        //getOrSetAsyncSemaphoreDic //как будет
-         // getOrSetAsyncLazy
+         //getOrSetAsyncOld //как есть
+         //getOrSetAsyncSemaphoreDic //как будет
+         getOrSetNewLazy
     )
     .Run();
 
