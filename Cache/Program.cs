@@ -3,7 +3,7 @@ using NBomber.CSharp;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
-ConcurrentDictionary<string, Lazy<string>> newCacheLazy = new();
+ConcurrentDictionary<string, Lazy<string>> cacheLazy = new();
 ConcurrentDictionary<string, bool> isExpiredDictionary = new();
 
 bool IsExpired(string key) => !isExpiredDictionary.TryGetValue(key, out _);
@@ -75,7 +75,7 @@ async Task<string> GetOrSetAsyncSemaphoreDic(string key)
 
 async Task<string> GetOrSetNewLazy(string key)
 {
-    var value = newCacheLazy
+    var value = cacheLazy
         .GetOrAdd(key, _ => new Lazy<string>(() => GetValue().Result, LazyThreadSafetyMode.ExecutionAndPublication))
         .Value;
 
@@ -146,7 +146,7 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
         
         if (counter == 250)
         {
-            newCacheLazy.Clear();
+            cacheLazy.Clear();
             counter = 0;
         }
 
