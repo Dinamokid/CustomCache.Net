@@ -1,9 +1,10 @@
-﻿using System.Collections.Concurrent;
+﻿// using System.Collections.Concurrent;
 using NBomber.CSharp;
+using NonBlocking;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
-ConcurrentDictionary<string, Lazy<string>> cacheLazy = new();
+ConcurrentDictionary<string, Lazy<Task<string>>> cacheLazy = new();
 ConcurrentDictionary<string, bool> isExpiredDictionary = new();
 
 bool IsExpired(string key) => !isExpiredDictionary.TryGetValue(key, out _);
@@ -76,10 +77,10 @@ async Task<string> GetOrSetAsyncSemaphoreDic(string key)
 async Task<string> GetOrSetNewLazy(string key)
 {
     var value = cacheLazy
-        .GetOrAdd(key, _ => new Lazy<string>(() => GetValue().Result, LazyThreadSafetyMode.ExecutionAndPublication))
+        .GetOrAdd(key, _ => new Lazy<Task<string>>(GetValue, LazyThreadSafetyMode.ExecutionAndPublication))
         .Value;
 
-    return value;
+    return await value;
 }
 
 async Task<string> GetValue()
@@ -101,8 +102,8 @@ var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
 
         if (counter == 250)
         {
-            isExpiredDictionary.Clear();
-            cache.Clear();
+            isExpiredDictionary = new ConcurrentDictionary<string, bool>();
+            cache = new ConcurrentDictionary<string, string>();
             counter = 0;
         }
 
@@ -124,8 +125,8 @@ var getOrSetAsyncSemaphoreDic = Scenario.Create("GetOrSetAsyncSemaphoreDic", asy
         
         if (counter == 250)
         {
-            isExpiredDictionary.Clear();
-            cache.Clear();
+            isExpiredDictionary = new ConcurrentDictionary<string, bool>();
+            cache = new ConcurrentDictionary<string, string>();
             counter = 0;
         }
 
@@ -146,7 +147,7 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
         
         if (counter == 250)
         {
-            cacheLazy.Clear();
+            cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
             counter = 0;
         }
 
@@ -160,8 +161,8 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
 NBomberRunner
     .RegisterScenarios(
          //getOrSetAsyncOld //как есть
-         //getOrSetAsyncSemaphoreDic //как будет
-         getOrSetNewLazy
+         getOrSetAsyncSemaphoreDic //как будет
+         //getOrSetNewLazy
     )
     .Run();
 
