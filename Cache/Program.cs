@@ -1,18 +1,13 @@
-﻿// using System.Collections.Concurrent;
-using NBomber.CSharp;
+﻿using NBomber.CSharp;
 using NonBlocking;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
 ConcurrentDictionary<string, Lazy<Task<string>>> cacheLazy = new();
-ConcurrentDictionary<string, bool> isExpiredDictionary = new();
 
-bool IsExpired(string key) => !isExpiredDictionary.TryGetValue(key, out _);
-
-var counter = 0;
 var fetchDataCounter = 0;
 
-async Task<string?> GetAsync(string key)
+string? Get(string key)
 {
     return cache.TryGetValue(key, out var value) ? value : null;
 }
@@ -22,7 +17,6 @@ async Task<string> SetAsync(string key)
     var value = await GetValue();
 
     cache[key] = value;
-    isExpiredDictionary.TryAdd(key, true);
 
     return value;
 }
@@ -41,27 +35,23 @@ SemaphoreSlim GetOrCreateSemaphore(string key)
 
 async Task<string> GetOrSetAsyncOld(string key)
 {
-    var value = await GetAsync(key);
-    if (value == null)
-    {
-        value = await SetAsync(key);
-    }
+    var value = Get(key) ?? await SetAsync(key);
 
     return value;
 }
 
-async Task<string> GetOrSetAsyncSemaphoreDic(string key)
+async Task<string> GetOrSetAsyncSemaphore(string key)
 {
-    var isExpired = IsExpired(key);
-    if (!isExpired) await GetAsync(key);
-
+    var value = Get(key);
+    if (value is not null) return value;
+    
     var semaphore = GetOrCreateSemaphore(key);
     await semaphore.WaitAsync();
     try
     {
-        isExpired = IsExpired(key);
+        value = Get(key);
 
-        if (isExpired)
+        if (value is null)
         {
             return await SetAsync(key);
         }
@@ -71,7 +61,7 @@ async Task<string> GetOrSetAsyncSemaphoreDic(string key)
         semaphore.Release();
     }
 
-    return (await GetAsync(key))!;
+    return Get(key)!;
 }
 
 async Task<string> GetOrSetNewLazy(string key)
@@ -100,37 +90,20 @@ var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
             GetOrSetAsyncOld("10")
         );
 
-        if (counter == 250)
-        {
-            isExpiredDictionary = new ConcurrentDictionary<string, bool>();
-            cache = new ConcurrentDictionary<string, string>();
-            counter = 0;
-        }
-
-        counter++;
-
         return Response.Ok();
     }).WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
-var getOrSetAsyncSemaphoreDic = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
+var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
     {
         Task.WaitAll(
-            GetOrSetAsyncSemaphoreDic("1"),
-            GetOrSetAsyncSemaphoreDic("2"),
-            GetOrSetAsyncSemaphoreDic("3"),
-            GetOrSetAsyncSemaphoreDic("4"),
-            GetOrSetAsyncSemaphoreDic("5")
+            GetOrSetAsyncSemaphore("1"),
+            GetOrSetAsyncSemaphore("2"),
+            GetOrSetAsyncSemaphore("3"),
+            GetOrSetAsyncSemaphore("4"),
+            GetOrSetAsyncSemaphore("5")
         );
         
-        if (counter == 250)
-        {
-            isExpiredDictionary = new ConcurrentDictionary<string, bool>();
-            cache = new ConcurrentDictionary<string, string>();
-            counter = 0;
-        }
-
-        counter++;
         return Response.Ok();
     }).WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
@@ -145,23 +118,26 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
             GetOrSetNewLazy("5")
         );
         
-        if (counter == 250)
-        {
-            cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
-            counter = 0;
-        }
-
-        counter++;
         return Response.Ok();
     })
     .WithoutWarmUp()
     .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
 
+await Task.Factory.StartNew(async () =>
+{
+    while (true)
+    {
+        await Task.Delay(2000);
+
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+    }
+});
 
 NBomberRunner
     .RegisterScenarios(
-         //getOrSetAsyncOld //как есть
-         getOrSetAsyncSemaphoreDic //как будет
+         getOrSetAsyncOld //как есть
+         //getOrSetAsyncSemaphore //как будет
          //getOrSetNewLazy
     )
     .Run();
