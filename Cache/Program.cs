@@ -1,5 +1,5 @@
-﻿using NBomber.CSharp;
-using NonBlocking;
+﻿using System.Collections.Concurrent;
+using NBomber.CSharp;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
@@ -136,8 +136,8 @@ await Task.Factory.StartNew(async () =>
 
 NBomberRunner
     .RegisterScenarios(
-         getOrSetAsyncOld //как есть
-         //getOrSetAsyncSemaphore //как будет
+         //getOrSetAsyncOld //как есть
+         getOrSetAsyncSemaphore //как будет
          //getOrSetNewLazy
     )
     .Run();
