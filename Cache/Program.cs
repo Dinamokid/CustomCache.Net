@@ -1,9 +1,13 @@
 ﻿using System.Collections.Concurrent;
+using LazyCache;
+using Microsoft.Extensions.Caching.Memory;
 using NBomber.CSharp;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
 ConcurrentDictionary<string, Lazy<Task<string>>> cacheLazy = new();
+CachingService libCache = new();
+var lazyCacheOptions = new LazyCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(2));
 
 var fetchDataCounter = 0;
 
@@ -44,7 +48,7 @@ async Task<string> GetOrSetAsyncSemaphore(string key)
 {
     var value = Get(key);
     if (value is not null) return value;
-    
+
     var semaphore = GetOrCreateSemaphore(key);
     await semaphore.WaitAsync();
     try
@@ -67,16 +71,21 @@ async Task<string> GetOrSetAsyncSemaphore(string key)
 async Task<string> GetOrSetNewLazy(string key)
 {
     var value = cacheLazy
-        .GetOrAdd(key, _ => new Lazy<Task<string>>(GetValue, LazyThreadSafetyMode.ExecutionAndPublication))
+        .GetOrAdd(key, _ => new Lazy<Task<string>>(GetValue))
         .Value;
 
     return await value;
 }
 
+async Task<string> GetOrSetLazyCacheLib(string key)
+{
+    return await libCache.GetOrAddAsync(key, GetValue, lazyCacheOptions);
+}
+
 async Task<string> GetValue()
 {
-    await Task.Delay(1000);
     fetchDataCounter++;
+    await Task.Delay(1000);
     return Guid.NewGuid().ToString();
 }
 
@@ -91,8 +100,9 @@ var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
         );
 
         return Response.Ok();
-    }).WithoutWarmUp()
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
+    })
+    .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
 
 var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
     {
@@ -103,10 +113,11 @@ var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphoreDic", async 
             GetOrSetAsyncSemaphore("4"),
             GetOrSetAsyncSemaphore("5")
         );
-        
+
         return Response.Ok();
-    }).WithoutWarmUp()
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
+    })
+    .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
 
 var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
     {
@@ -117,11 +128,26 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
             GetOrSetNewLazy("4"),
             GetOrSetNewLazy("5")
         );
-        
+
         return Response.Ok();
     })
-    .WithoutWarmUp()
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(10)));
+    .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
+
+var getOrSetLazyCacheLib = Scenario.Create("getOrSetLazyCacheLib", async _ =>
+    {
+        Task.WaitAll(
+            GetOrSetLazyCacheLib("1"),
+            GetOrSetLazyCacheLib("2"),
+            GetOrSetLazyCacheLib("3"),
+            GetOrSetLazyCacheLib("4"),
+            GetOrSetLazyCacheLib("5")
+        );
+
+        return Response.Ok();
+    })
+    .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
 
 await Task.Factory.StartNew(async () =>
 {
@@ -136,10 +162,12 @@ await Task.Factory.StartNew(async () =>
 
 NBomberRunner
     .RegisterScenarios(
-         //getOrSetAsyncOld //как есть
-         getOrSetAsyncSemaphore //как будет
-         //getOrSetNewLazy
+        // getOrSetAsyncOld
+        getOrSetAsyncSemaphore
+        // getOrSetNewLazy
+        // getOrSetLazyCacheLib
     )
     .Run();
 
 Console.WriteLine(fetchDataCounter);
+fetchDataCounter = 0;

@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="LazyCache" Version="2.4.0" />
       <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
       <PackageReference Include="NBomber" Version="5.1.1" />
       <PackageReference Include="NonBlocking" Version="2.1.2" />
