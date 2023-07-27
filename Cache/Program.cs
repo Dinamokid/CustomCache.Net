@@ -162,8 +162,8 @@ await Task.Factory.StartNew(async () =>
 
 NBomberRunner
     .RegisterScenarios(
-        // getOrSetAsyncOld
-        getOrSetAsyncSemaphore
+         getOrSetAsyncOld
+        // getOrSetAsyncSemaphore
         // getOrSetNewLazy
         // getOrSetLazyCacheLib
     )
