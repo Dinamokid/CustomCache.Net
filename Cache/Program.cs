@@ -1,7 +1,7 @@
-﻿using System.Collections.Concurrent;
-using LazyCache;
+﻿using LazyCache;
 using Microsoft.Extensions.Caching.Memory;
 using NBomber.CSharp;
+using NonBlocking;
 
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
@@ -162,9 +162,9 @@ await Task.Factory.StartNew(async () =>
 
 NBomberRunner
     .RegisterScenarios(
-         getOrSetAsyncOld
+        // getOrSetAsyncOld
         // getOrSetAsyncSemaphore
-        // getOrSetNewLazy
+         getOrSetNewLazy
         // getOrSetLazyCacheLib
     )
     .Run();

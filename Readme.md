@@ -1,44 +1,51 @@
-```scenario: GetOrSetAsyncSemaphoreDic
+# Semaphore Concurrent Dictionary cache
+```
 ┌────────────────────┬───────────────────────────────────────────────────┐
 │               step │ ok stats                                          │
 ├────────────────────┼───────────────────────────────────────────────────┤
 │               name │ global information                                │
-│      request count │ all = 31_134_747, ok = 31134747, RPS = 518912.4   │
+│      request count │ all = 31_134_747, ok = 31134747, RPS = 518912.4   │ (NonBlocking: 35_140_607)
 │            latency │ min = 0, mean = 0.09, max = 1163.3, StdDev = 7.19 │
 │ latency percentile │ p50 = 0, p75 = 0, p95 = 0, p99 = 0                │
 └────────────────────┴───────────────────────────────────────────────────┘
-120
-
-scenario: getOrSetAsyncLazy
+120 fetches
+```
+# Lazy Concurrent Dictionary cache
+```
 ┌────────────────────┬───────────────────────────────────────────────────┐
 │               step │ ok stats                                          │
 ├────────────────────┼───────────────────────────────────────────────────┤
 │               name │ global information                                │
-│      request count │ all = 28_031_990, ok = 28031990, RPS = 467199.8   │
+│      request count │ all = 28_031_990, ok = 28031990, RPS = 467199.8   │ (NonBlocking: 29_620_349)
 │            latency │ min = 0, mean = 0.11, max = 4956.32, StdDev = 9.5 │
 │ latency percentile │ p50 = 0, p75 = 0, p95 = 0, p99 = 0                │
 └────────────────────┴───────────────────────────────────────────────────┘
-128
+128 fetches
+```
 
-scenario: getOrSetLazyCacheLib
+# LazyCache nuget package
+```
+
 ┌────────────────────┬─────────────────────────────────────────────────────┐
 │               step │ ok stats                                            │
 ├────────────────────┼─────────────────────────────────────────────────────┤
 │               name │ global information                                  │
-│      request count │ all = 3_144_798, ok = 3144798, RPS = 52413.3        │
+│      request count │ all = 3_144_798, ok = 3144798, RPS = 52413.3        │ (NonBlocking: 6_123_058)
 │            latency │ min = 0, mean = 1.02, max = 5909.31, StdDev = 35.82 │
 │ latency percentile │ p50 = 0.04, p75 = 0.08, p95 = 0.16, p99 = 2.86      │
 └────────────────────┴─────────────────────────────────────────────────────┘
-215
+215 fetches
+```
 
-scenario: GetOrSetAsyncOld
+# Not lazy cache
+```
 ┌────────────────────┬────────────────────────────────────────────────────┐
 │               step │ ok stats                                           │
 ├────────────────────┼────────────────────────────────────────────────────┤
 │               name │ global information                                 │
-│      request count │ all = 32_309_225, ok = 32309225, RPS = 538487.1    │
+│      request count │ all = 32_309_225, ok = 32309225, RPS = 538487.1    │ (NonBlocking: 31_080_391)
 │            latency │ min = 0, mean = 0.08, max = 1264.27, StdDev = 7.07 │
 │ latency percentile │ p50 = 0, p75 = 0, p95 = 0, p99 = 0                 │
 └────────────────────┴────────────────────────────────────────────────────┘
-6463
+6463 fetches
 ```
