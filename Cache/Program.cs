@@ -227,7 +227,7 @@ await Task.Factory.StartNew(async () =>
 NBomberRunner
     .RegisterScenarios(getOrSetAsyncOld)
     .WithReportFolder(@"../../../../Reports/without_lazy_cache")
-    .WithReportFileName("without_lazy_cache")
+    .WithReportFileName("without_lazy_cache") 
     .Run();
 
 NBomberRunner
