@@ -1,5 +1,7 @@
-﻿using LazyCache;
+﻿using Cache;
+using LazyCache;
 using Microsoft.Extensions.Caching.Memory;
+using NBomber.Contracts.Stats;
 using NBomber.CSharp;
 using NonBlocking;
 
@@ -7,6 +9,8 @@ ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
 ConcurrentDictionary<string, Lazy<Task<string>>> cacheLazy = new();
 CachingService libCache = new();
+CustomLazyCache customLazyCache = new();
+
 var lazyCacheOptions = new LazyCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(2));
 
 var fetchDataCounter = 0;
@@ -82,6 +86,11 @@ async Task<string> GetOrSetLazyCacheLib(string key)
     return await libCache.GetOrAddAsync(key, GetValue, lazyCacheOptions);
 }
 
+async Task<string> GetOrSetCustomLazyCache(string key)
+{
+    return await customLazyCache.GetOrSetAsync(key, GetValue, 2);
+}
+
 async Task<string> GetValue()
 {
     fetchDataCounter++;
@@ -102,7 +111,15 @@ var getOrSetAsyncOld = Scenario.Create("GetOrSetAsyncOld", async _ =>
         return Response.Ok();
     })
     .WithWarmUpDuration(TimeSpan.FromSeconds(10))
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)))
+    .WithClean(context =>
+    {
+        context.Logger.Information($"Fetches: {fetchDataCounter}");
+        fetchDataCounter = 0;
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+        return Task.CompletedTask;
+    });
 
 var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphoreDic", async _ =>
     {
@@ -117,7 +134,15 @@ var getOrSetAsyncSemaphore = Scenario.Create("GetOrSetAsyncSemaphoreDic", async 
         return Response.Ok();
     })
     .WithWarmUpDuration(TimeSpan.FromSeconds(10))
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)))
+    .WithClean(context =>
+    {
+        context.Logger.Information($"Fetches: {fetchDataCounter}");
+        fetchDataCounter = 0;
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+        return Task.CompletedTask;
+    });
 
 var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
     {
@@ -132,7 +157,15 @@ var getOrSetNewLazy = Scenario.Create("getOrSetAsyncLazy", async _ =>
         return Response.Ok();
     })
     .WithWarmUpDuration(TimeSpan.FromSeconds(10))
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)))
+    .WithClean(context =>
+    {
+        context.Logger.Information($"Fetches: {fetchDataCounter}");
+        fetchDataCounter = 0;
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+        return Task.CompletedTask;
+    });
 
 var getOrSetLazyCacheLib = Scenario.Create("getOrSetLazyCacheLib", async _ =>
     {
@@ -147,7 +180,38 @@ var getOrSetLazyCacheLib = Scenario.Create("getOrSetLazyCacheLib", async _ =>
         return Response.Ok();
     })
     .WithWarmUpDuration(TimeSpan.FromSeconds(10))
-    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)));
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)))
+    .WithClean(context =>
+    {
+        context.Logger.Information($"Fetches: {fetchDataCounter}");
+        fetchDataCounter = 0;
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+        return Task.CompletedTask;
+    });
+
+var getOrSetCustomLazyCache = Scenario.Create("getOrSetCustomLazyCache", async _ =>
+    {
+        Task.WaitAll(
+            GetOrSetCustomLazyCache("1"),
+            GetOrSetCustomLazyCache("2"),
+            GetOrSetCustomLazyCache("3"),
+            GetOrSetCustomLazyCache("4"),
+            GetOrSetCustomLazyCache("5")
+        );
+
+        return Response.Ok();
+    })
+    .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+    .WithLoadSimulations(Simulation.KeepConstant(50, TimeSpan.FromSeconds(60)))
+    .WithClean(context =>
+    {
+        context.Logger.Information($"Fetches: {fetchDataCounter}");
+        fetchDataCounter = 0;
+        cache = new ConcurrentDictionary<string, string>();
+        cacheLazy = new ConcurrentDictionary<string, Lazy<Task<string>>>();
+        return Task.CompletedTask;
+    });
 
 await Task.Factory.StartNew(async () =>
 {
@@ -161,13 +225,33 @@ await Task.Factory.StartNew(async () =>
 });
 
 NBomberRunner
-    .RegisterScenarios(
-        // getOrSetAsyncOld
-        // getOrSetAsyncSemaphore
-         getOrSetNewLazy
-        // getOrSetLazyCacheLib
-    )
+    .RegisterScenarios(getOrSetAsyncOld)
+    .WithReportFolder(@"../../../../Reports/without_lazy_cache")
+    .WithReportFileName("without_lazy_cache")
     .Run();
 
-Console.WriteLine(fetchDataCounter);
-fetchDataCounter = 0;
+NBomberRunner
+    .RegisterScenarios(getOrSetAsyncSemaphore)
+    .WithReportFolder(@"../../../../Reports/semaphore_lazy_cache")
+    .WithReportFileName("semaphore_lazy_cache")
+    .Run();
+
+NBomberRunner
+    .RegisterScenarios(getOrSetNewLazy)
+    .WithReportFolder(@"../../../../Reports/lazy_cache")
+    .WithReportFileName("lazy_cache")
+    .Run();
+
+NBomberRunner
+    .RegisterScenarios(getOrSetLazyCacheLib)
+    .WithReportFolder(@"../../../../Reports/lazy_cache_lib")
+    .WithReportFileName("lazy_cache_lib")
+    .Run();
+
+NBomberRunner
+    .RegisterScenarios(getOrSetCustomLazyCache)
+    .WithReportFolder(@"../../../../Reports/custom_lazy_cache")
+    .WithReportFileName("custom_lazy_cache")
+    .Run();
+
+Console.ReadLine();

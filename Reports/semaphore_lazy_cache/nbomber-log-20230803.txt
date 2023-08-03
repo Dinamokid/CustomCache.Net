@@ -1,0 +1,20 @@
+2023-08-03 14:45:16.238 +03:00 [INF] [ThreadId:4] NBomber 5.1.1 started a new session: 2023-08-03_11.45.23_session_61d04c00
+2023-08-03 14:45:16.241 +03:00 [INF] [ThreadId:4] NBomber started as single node
+2023-08-03 14:45:16.241 +03:00 [INF] [ThreadId:4] License validation....
+2023-08-03 14:45:16.241 +03:00 [WRN] [ThreadId:4] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.
+2023-08-03 14:45:16.242 +03:00 [INF] [ThreadId:4] Reports folder: D:\Users\DPC\RiderProjects\CachePerf\Cache\bin\Release\net7.0\../../../../Reports/semaphore_lazy_cache
+2023-08-03 14:45:16.242 +03:00 [INF] [ThreadId:4] Plugins: no plugins were loaded
+2023-08-03 14:45:16.242 +03:00 [INF] [ThreadId:4] Reporting sinks: no reporting sinks were loaded
+2023-08-03 14:45:16.242 +03:00 [INF] [ThreadId:4] Starting init...
+2023-08-03 14:45:16.243 +03:00 [INF] [ThreadId:4] Target scenarios: GetOrSetAsyncSemaphoreDic
+2023-08-03 14:45:16.243 +03:00 [INF] [ThreadId:4] Init finished
+2023-08-03 14:45:16.243 +03:00 [INF] [ThreadId:4] Starting warm up...
+2023-08-03 14:45:16.243 +03:00 [INF] [ThreadId:4] Warm up for scenarios: GetOrSetAsyncSemaphoreDic
+2023-08-03 14:45:16.243 +03:00 [INF] [ThreadId:4] Warm up duration: 00:00:10
+2023-08-03 14:45:27.867 +03:00 [INF] [ThreadId:54] Starting bombing...
+2023-08-03 14:46:32.386 +03:00 [INF] [ThreadId:65] Stopping scenarios...
+2023-08-03 14:46:32.386 +03:00 [INF] [ThreadId:65] Start cleaning scenario: GetOrSetAsyncSemaphoreDic
+2023-08-03 14:46:32.386 +03:00 [INF] [ThreadId:65] Fetches: 163
+2023-08-03 14:46:32.387 +03:00 [INF] [ThreadId:65] Calculating final statistics...
+2023-08-03 14:46:32.547 +03:00 [INF] [ThreadId:65] Reports saved in folder: D:\Users\DPC\RiderProjects\CachePerf\Reports\semaphore_lazy_cache
+2023-08-03 14:46:32.548 +03:00 [WRN] [ThreadId:65] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.

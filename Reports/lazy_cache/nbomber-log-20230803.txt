@@ -1,0 +1,20 @@
+2023-08-03 14:46:32.548 +03:00 [INF] [ThreadId:4] NBomber 5.1.1 started a new session: 2023-08-03_11.46.54_session_1050865f
+2023-08-03 14:46:32.551 +03:00 [INF] [ThreadId:4] NBomber started as single node
+2023-08-03 14:46:32.551 +03:00 [INF] [ThreadId:4] License validation....
+2023-08-03 14:46:32.551 +03:00 [WRN] [ThreadId:4] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.
+2023-08-03 14:46:32.551 +03:00 [INF] [ThreadId:4] Reports folder: D:\Users\DPC\RiderProjects\CachePerf\Cache\bin\Release\net7.0\../../../../Reports/lazy_cache
+2023-08-03 14:46:32.552 +03:00 [INF] [ThreadId:4] Plugins: no plugins were loaded
+2023-08-03 14:46:32.552 +03:00 [INF] [ThreadId:4] Reporting sinks: no reporting sinks were loaded
+2023-08-03 14:46:32.552 +03:00 [INF] [ThreadId:4] Starting init...
+2023-08-03 14:46:32.552 +03:00 [INF] [ThreadId:4] Target scenarios: getOrSetAsyncLazy
+2023-08-03 14:46:32.552 +03:00 [INF] [ThreadId:4] Init finished
+2023-08-03 14:46:32.553 +03:00 [INF] [ThreadId:4] Starting warm up...
+2023-08-03 14:46:32.553 +03:00 [INF] [ThreadId:4] Warm up for scenarios: getOrSetAsyncLazy
+2023-08-03 14:46:32.553 +03:00 [INF] [ThreadId:4] Warm up duration: 00:00:10
+2023-08-03 14:46:44.077 +03:00 [INF] [ThreadId:54] Starting bombing...
+2023-08-03 14:47:48.654 +03:00 [INF] [ThreadId:23] Stopping scenarios...
+2023-08-03 14:47:48.654 +03:00 [INF] [ThreadId:23] Start cleaning scenario: getOrSetAsyncLazy
+2023-08-03 14:47:48.655 +03:00 [INF] [ThreadId:23] Fetches: 159
+2023-08-03 14:47:48.655 +03:00 [INF] [ThreadId:23] Calculating final statistics...
+2023-08-03 14:47:48.799 +03:00 [INF] [ThreadId:23] Reports saved in folder: D:\Users\DPC\RiderProjects\CachePerf\Reports\lazy_cache
+2023-08-03 14:47:48.799 +03:00 [WRN] [ThreadId:23] THIS VERSION IS FREE ONLY FOR PERSONAL USE. You can't use it for an organization.

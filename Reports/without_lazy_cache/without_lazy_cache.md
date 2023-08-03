@@ -1,0 +1,34 @@
+> test info
+
+test suite: `nbomber_default_test_suite_name`
+
+test name: `nbomber_default_test_name`
+
+session id: `2023-08-03_11.43.38_session_329d7dde`
+
+> scenario stats
+
+scenario: `GetOrSetAsyncOld`
+
+  - ok count: `92311846`
+
+  - fail count: `0`
+
+  - all data: `0` MB
+
+  - duration: `00:01:00`
+
+load simulations:
+
+  - `keep_constant`, copies: `50`, during: `00:01:00`
+
+|step|ok stats|
+|---|---|
+|name|`global information`|
+|request count|all = `92311846`, ok = `92311846`, RPS = `1538530,8`|
+|latency|min = `0`, mean = `0,03`, max = `15881,09`, StdDev = `9,47`|
+|latency percentile|p50 = `0`, p75 = `0`, p95 = `0`, p99 = `0`|
+
+
+
+
