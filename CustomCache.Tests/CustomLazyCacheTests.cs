@@ -1,4 +1,3 @@
-using NonBlocking;
 namespace CustomCache.Tests;
 
 public class CustomLazyCacheTests
@@ -66,18 +65,16 @@ public class CustomLazyCacheTests
         var cache = new CustomLazyCache();
         var key = Guid.NewGuid().ToString();
 
-        //Init cache
         var result1 = await cache.GetOrSetAsync(key, GetValue, 1);
         await Task.Delay(TimeSpan.FromSeconds(3));
         
-        //Init cache
         var result2 = await cache.GetOrSetAsync(key, GetValue, 1);
         await Task.Delay(TimeSpan.FromSeconds(3));
         
         Assert.That(_fetchCount, Is.EqualTo(2));
         Assert.That(result2, Is.EqualTo(result1));
     }
-
+    
     async Task<string> GetValue()
     {
         _fetchCount++;

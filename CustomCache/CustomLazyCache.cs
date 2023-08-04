@@ -1,11 +1,12 @@
 ﻿using System.Runtime.Caching;
+using NonBlocking;
 namespace CustomCache;
 
 public class CustomLazyCache : ICustomCache
 {
     private static readonly MemoryCache Cache = new("CustomLazyCache");
     private static readonly CacheItemPolicy CacheOptions = new();
-    public static readonly NonBlocking.ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
+    public static readonly ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
 
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
     {
@@ -21,7 +22,7 @@ public class CustomLazyCache : ICustomCache
         
         if (cacheManageItem.IsExpired() && cacheManageItem.Semaphore.CurrentCount == 1)
         {
-            _ = Task.Run(() => GetValueFromSource(key, getValue, expirationInSecond));
+            GetValueFromSource(key, getValue, expirationInSecond);
         }
         
         return Cache.Get(key) as T;
@@ -29,9 +30,8 @@ public class CustomLazyCache : ICustomCache
     
     private async Task<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class
     {
-        CacheManageDictionary.TryAdd(key, new CacheManageItem(TimeSpan.FromSeconds(0)));
-        var cacheManageItem = CacheManageDictionary[key];
-
+        var cacheManageItem = CacheManageDictionary.GetOrAdd(key, new CacheManageItem(TimeSpan.FromMilliseconds(0)));
+        
         await cacheManageItem.Semaphore.WaitAsync();
         try
         {
@@ -40,7 +40,7 @@ public class CustomLazyCache : ICustomCache
             var value = await getValue();
             Cache.Set(key, value, CacheOptions);
             cacheManageItem.ChangeExpirationTime(GetExpirationTime(expirationInSecond));
-
+        
             return value;
         }
         finally
