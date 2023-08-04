@@ -33,7 +33,7 @@ data (KB): mean = 0.000, max = 0.000, all = 0.0 MB
 ```
 ![semaphore_lazy_cache](./Reports/semaphore_lazy_cache/semaphore_lazy_cache.png)
 
-# Custom semaphore lazy cache (595 fetches)
+# Custom semaphore lazy cache (5 fetches)
 ```
 requests: all = 85_373_575, ok = 85373575, fail = 0, RPS = 1422892.9/s
 latency (ms): min = 0, mean = 0.03, max = 196.83
