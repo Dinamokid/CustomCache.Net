@@ -33,11 +33,11 @@ data (KB): mean = 0.000, max = 0.000, all = 0.0 MB
 ```
 ![semaphore_lazy_cache](./Reports/semaphore_lazy_cache/semaphore_lazy_cache.png)
 
-# Custom semaphore lazy cache (5 fetches)
+# Custom semaphore lazy cache (120 fetches)
 ```
-requests: all = 85_373_575, ok = 85373575, fail = 0, RPS = 1422892.9/s
-latency (ms): min = 0, mean = 0.03, max = 196.83
-latency percentile (ms): p50 = 0, p75 = 0, p95 = 0.01, p99 = 0.02
+requests: all = 59_776_534, ok = 59776534, fail = 0, RPS = 996275.6/s
+latency (ms): min = 0, mean = 0.05, max = 345.43
+latency percentile (ms): p50 = 0.01, p75 = 0.01, p95 = 0.02, p99 = 0.02
 data (KB): mean = 0.000, max = 0.000, all = 0.0 MB
 ```
 ![custom_lazy_cache](./Reports/custom_lazy_cache/custom_lazy_cache.png)
