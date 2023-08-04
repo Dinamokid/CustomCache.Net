@@ -1,126 +1,71 @@
 ﻿using System.Runtime.Caching;
 namespace CustomCache;
 
-public class CustomLazyCache
+public class CustomLazyCache : ICustomCache
 {
     private static readonly MemoryCache Cache = new("CustomLazyCache");
-    private static readonly NonBlocking.ConcurrentDictionary<string, CustomCacheItem> CacheManageDictionary = new();
-
-    public T Get<T>(string key) where T : class
-    {
-        return Cache.Get(key) is T ? Cache.Get(key) as T : null;
-    }
-
-    public Task<T> GetAsync<T>(string key) where T : class
-    {
-        return Task.FromResult(Cache.Get(key) is T ? Cache.Get(key) as T : null);
-    }
-
-    public T Set<T>(string key, Func<T> getValue, int? expirationInSecond = null) where T : class
-    {
-        var value = getValue();
-
-        Cache.Set(key, value, DateTimeOffset.UtcNow.AddYears(1));
-        CacheManageDictionary.TryRemove(key, out _);
-        CacheManageDictionary.TryAdd(key, new CustomCacheItem
-        {
-            ExpirationDate = expirationInSecond.HasValue ? DateTime.UtcNow.AddSeconds(expirationInSecond.Value) : DateTime.UtcNow.AddMinutes(3)
-        });
-
-        return value;
-    }
-
-    public async Task<T> SetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
-    {
-        CacheManageDictionary.TryRemove(key, out _);
-        CacheManageDictionary.TryAdd(key, new CustomCacheItem
-        {
-            ExpirationDate = expirationInSecond.HasValue ? DateTime.UtcNow.AddSeconds(expirationInSecond.Value) : DateTime.UtcNow.AddMinutes(3)
-        });
-
-        var value = await getValue();
-        
-        Cache.Set(key, value, DateTimeOffset.UtcNow.AddYears(1));
-        
-        return value;
-    }
-
-    public T? GetOrSet<T>(string key, Func<T?> getValue, int? expirationInSecond = null) where T : class
-    {
-        if (!CacheManageDictionary.TryGetValue(key, out var cacheManageItem))
-        {
-            return Set(key, getValue, expirationInSecond);
-        }
-
-        var isExpired = cacheManageItem!.ExpirationDate <= DateTime.UtcNow;
-
-        var result = Get<T>(key);
-        if (!isExpired && result != null)
-        {
-            return result;
-        }
-
-        return Set(key, getValue, expirationInSecond);
-    }
+    private static readonly CacheItemPolicy CacheOptions = new();
+    private static readonly NonBlocking.ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
 
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
     {
-        if (!CacheManageDictionary.TryGetValue(key, out var cacheManageItem))
+        CacheManageDictionary.TryGetValue(key, out var cacheManageItem);
+
+        if (cacheManageItem == null)
         {
-            CacheManageDictionary.TryRemove(key, out _);
-            CacheManageDictionary.TryAdd(key, new CustomCacheItem
-            {
-                ExpirationDate = expirationInSecond.HasValue ? DateTime.UtcNow.AddSeconds(expirationInSecond.Value) : DateTime.UtcNow.AddMinutes(3)
-            });
-            
-            cacheManageItem = CacheManageDictionary[key];
+            return await GetValueFromSource(key, getValue, expirationInSecond);
         }
         
-        var isExpired = cacheManageItem!.ExpirationDate <= DateTime.UtcNow;
-        
-        var result = await GetAsync<T>(key);
-        if (result != null && (!isExpired || cacheManageItem.Semaphore.CurrentCount == 1))
+        if (cacheManageItem.IsNotExpired() || cacheManageItem.IsExpiredAndBusy())
         {
-            return result;
+            return Cache.Get(key) as T;
         }
         
+        return await GetValueFromSource(key, getValue, expirationInSecond);
+    }
+    
+    private async Task<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class
+    {
+        CacheManageDictionary.TryAdd(key, new CacheManageItem(TimeSpan.FromSeconds(0)));
+        var cacheManageItem = CacheManageDictionary[key];
+
         await cacheManageItem.Semaphore.WaitAsync();
         try
         {
-            isExpired = cacheManageItem!.ExpirationDate <= DateTime.UtcNow;
-            result = await GetAsync<T>(key);
-        
-            if (isExpired || result == null)
-            {
-                return await SetAsync(key, getValue, expirationInSecond);
-            }
+            if (cacheManageItem.IsNotExpired()) return Cache.Get(key) as T;
+            
+            var value = await getValue();
+            Cache.Set(key, value, CacheOptions);
+            cacheManageItem.ChangeExpirationTime(GetExpirationTime(expirationInSecond));
+
+            return (T)value;
         }
         finally
         {
             cacheManageItem.Semaphore.Release();
         }
-        
-        return await GetAsync<T>(key);
     }
-    
-    private CustomCacheItem GetOrCreateSemaphore(string key, int? expirationInSecond = null)
-    {
-        if (CacheManageDictionary.TryGetValue(key, out var customCacheItem))
-        {
-            return customCacheItem;
-        }
 
-        CacheManageDictionary.TryAdd(key, new CustomCacheItem()
-        {
-            ExpirationDate = expirationInSecond.HasValue ? DateTime.UtcNow.AddSeconds(expirationInSecond.Value) : DateTime.UtcNow.AddMinutes(3)
-        });
-
-        return CacheManageDictionary[key];
-    }
+    private TimeSpan GetExpirationTime(int? expirationInSecond = null) =>
+        expirationInSecond.HasValue ? TimeSpan.FromSeconds(expirationInSecond.Value) : TimeSpan.FromMinutes(3);
 }
 
-internal class CustomCacheItem
+internal class CacheManageItem
 {
-    public SemaphoreSlim Semaphore { get; set; } = new(1);
-    public DateTime ExpirationDate { get; set; }
+    public SemaphoreSlim Semaphore { get; }
+    private DateTime ExpirationDate { get; set; }
+
+    public CacheManageItem(TimeSpan expiration)
+    {
+        ExpirationDate = DateTime.UtcNow.Add(expiration);
+        Semaphore = new SemaphoreSlim(1);
+    }
+
+    public void ChangeExpirationTime(TimeSpan expiration)
+    {
+        ExpirationDate = DateTime.UtcNow.Add(expiration);
+    }
+
+    public bool IsNotExpired() => DateTime.UtcNow < ExpirationDate;
+    public bool IsExpiredAndBusy() => DateTime.UtcNow > ExpirationDate && Semaphore.CurrentCount > 0;
 }

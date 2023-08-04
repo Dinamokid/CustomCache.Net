@@ -20,8 +20,8 @@ public class CustomLazyCacheTests
     {
         var cache = new CustomLazyCache();
 
-        var task1 = cache.GetOrSetAsync("test", GetValue, 60);
-        var task2 = cache.GetOrSetAsync("test", GetValue, 60);
+        var task1 = cache.GetOrSetAsync("test", GetValue, 10);
+        var task2 = cache.GetOrSetAsync("test", GetValue, 10);
 
         await Task.WhenAll(task1, task2);
 
