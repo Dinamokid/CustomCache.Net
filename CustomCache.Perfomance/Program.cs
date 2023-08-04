@@ -1,7 +1,6 @@
-﻿using Cache;
+﻿using CustomCache;
 using LazyCache;
 using Microsoft.Extensions.Caching.Memory;
-using NBomber.Contracts.Stats;
 using NBomber.CSharp;
 using NonBlocking;
 
