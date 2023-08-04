@@ -223,29 +223,29 @@ await Task.Factory.StartNew(async () =>
     }
 });
 
-NBomberRunner
-    .RegisterScenarios(getOrSetAsyncOld)
-    .WithReportFolder("../../../../Reports/without_lazy_cache")
-    .WithReportFileName("without_lazy_cache") 
-    .Run();
-
-NBomberRunner
-    .RegisterScenarios(getOrSetAsyncSemaphore)
-    .WithReportFolder("../../../../Reports/semaphore_lazy_cache")
-    .WithReportFileName("semaphore_lazy_cache")
-    .Run();
-
-NBomberRunner
-    .RegisterScenarios(getOrSetNewLazy)
-    .WithReportFolder("../../../../Reports/lazy_cache")
-    .WithReportFileName("lazy_cache")
-    .Run();
-
-NBomberRunner
-    .RegisterScenarios(getOrSetLazyCacheLib)
-    .WithReportFolder("../../../../Reports/lazy_cache_lib")
-    .WithReportFileName("lazy_cache_lib")
-    .Run();
+// NBomberRunner
+//     .RegisterScenarios(getOrSetAsyncOld)
+//     .WithReportFolder("../../../../Reports/without_lazy_cache")
+//     .WithReportFileName("without_lazy_cache") 
+//     .Run();
+//
+// NBomberRunner
+//     .RegisterScenarios(getOrSetAsyncSemaphore)
+//     .WithReportFolder("../../../../Reports/semaphore_lazy_cache")
+//     .WithReportFileName("semaphore_lazy_cache")
+//     .Run();
+//
+// NBomberRunner
+//     .RegisterScenarios(getOrSetNewLazy)
+//     .WithReportFolder("../../../../Reports/lazy_cache")
+//     .WithReportFileName("lazy_cache")
+//     .Run();
+//
+// NBomberRunner
+//     .RegisterScenarios(getOrSetLazyCacheLib)
+//     .WithReportFolder("../../../../Reports/lazy_cache_lib")
+//     .WithReportFileName("lazy_cache_lib")
+//     .Run();
 
 NBomberRunner
     .RegisterScenarios(getOrSetCustomLazyCache)
