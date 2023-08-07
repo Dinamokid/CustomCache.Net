@@ -1,11 +1,10 @@
-﻿using System.Runtime.Caching;
+﻿using Microsoft.Extensions.Caching.Memory;
 using NonBlocking;
 namespace CustomCache;
 
 public class CustomLazyCache : ICustomCache
 {
-    private static readonly MemoryCache Cache = new("CustomLazyCache");
-    private static readonly CacheItemPolicy CacheOptions = new();
+    private static readonly MemoryCache Cache = new(new MemoryCacheOptions());
     public static readonly ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
 
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
@@ -28,7 +27,7 @@ public class CustomLazyCache : ICustomCache
         return Cache.Get(key) as T;
     }
     
-    private async Task<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class
+    private async ValueTask<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class
     {
         var cacheManageItem = CacheManageDictionary.GetOrAdd(key, new CacheManageItem(TimeSpan.FromMilliseconds(0)));
         
@@ -38,7 +37,7 @@ public class CustomLazyCache : ICustomCache
             if (cacheManageItem.IsNotExpired()) return Cache.Get(key) as T;
             
             var value = await getValue();
-            Cache.Set(key, value, CacheOptions);
+            Cache.Set(key, value);
             cacheManageItem.ChangeExpirationTime(GetExpirationTime(expirationInSecond));
         
             return value;
