@@ -9,14 +9,11 @@ public class CustomLazyCache : ICustomCache
 
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
     {
-        if (!CacheManageDictionary.TryGetValue(key, out var cacheManageItem) || Cache.Get(key) == null)
+        var value = Cache.Get(key);
+
+        if (!CacheManageDictionary.TryGetValue(key, out var cacheManageItem) || value == null)
         {
             return await GetValueFromSource(key, getValue, expirationInSecond);
-        }
-        
-        if (cacheManageItem.IsNotExpired())
-        {
-            return Cache.Get(key) as T;
         }
         
         if (cacheManageItem.IsExpired() && cacheManageItem.Semaphore.CurrentCount == 1)
@@ -24,7 +21,7 @@ public class CustomLazyCache : ICustomCache
             GetValueFromSource(key, getValue, expirationInSecond);
         }
         
-        return Cache.Get(key) as T;
+        return value as T;
     }
     
     private async ValueTask<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class

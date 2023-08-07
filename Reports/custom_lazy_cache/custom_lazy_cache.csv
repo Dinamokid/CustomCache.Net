@@ -1,2 +1,2 @@
 test_suite,test_name,scenario,duration,step_name,request_count,ok,failed,rps,min,mean,max,50_percent,75_percent,95_percent,99_percent,std_dev,data_transfer_min_kb,data_transfer_mean_kb,data_transfer_max_kb,data_transfer_all_mb
-nbomber_default_test_suite_name,nbomber_default_test_name,getOrSetCustomLazyCache,00:01:00,global information,102608248,102608248,0,1710137.5,0,0.03,438.26,0,0,0,0.02,0.85,0,0,0,0
+nbomber_default_test_suite_name,nbomber_default_test_name,getOrSetCustomLazyCache,00:01:00,global information,106111221,106111221,0,1768520.4,0,0.03,214.8,0,0,0,0.02,0.64,0,0,0,0
