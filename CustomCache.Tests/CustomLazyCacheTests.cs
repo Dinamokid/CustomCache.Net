@@ -24,22 +24,32 @@ public class CustomLazyCacheTests
     }
 
     [Test]
-    public async Task CacheMustBeLazy()
+    public void CacheMustBeLazy()
     {
         var cache = new CustomLazyCache();
-        
+        var x = 0;
+        var y = 0;
+        var rnd = Random.Shared;
+            
         var key = Guid.NewGuid().ToString();
+            
+        var threads = Enumerable.Range(0, 10000).Select(_ => new Thread(() =>
+        {
+            Interlocked.Increment(ref y);
+            Thread.Sleep(rnd.Next(15, 20));
+            cache.GetOrSetAsync(key, () =>
+            {
+                Interlocked.Increment(ref x);
+                Thread.Sleep(rnd.Next(10,20));
+                return Task.FromResult(new object());
+            }, 60);
+        })).ToList();
+            
+        threads.ForEach(t => t.Start());
+        threads.ForEach(t => t.Join());
 
-        var task1 = cache.GetOrSetAsync(key, GetValue, 10);
-        var task2 = cache.GetOrSetAsync(key, GetValue, 10);
-
-        await Task.WhenAll(task1, task2);
-
-        var result1 = await task1;
-        var result2 = await task2;
-        
-        Assert.That(_fetchCount, Is.EqualTo(1));
-        Assert.That(result2, Is.EqualTo(result1));
+        Assert.That(Volatile.Read(ref x), Is.EqualTo(1));
+        Assert.That(Volatile.Read(ref y), Is.EqualTo(10000));
     }
     
     [Test]
