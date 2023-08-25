@@ -5,7 +5,7 @@ namespace CustomCache;
 public class CustomLazyCache : ICustomCache
 {
     private static readonly MemoryCache Cache = new(new MemoryCacheOptions());
-    public static readonly ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
+    private static readonly ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
 
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
     {
@@ -15,7 +15,7 @@ public class CustomLazyCache : ICustomCache
         {
             return await GetValueFromSource(key, getValue, expirationInSecond);
         }
-        
+
         if (cacheManageItem.IsExpired() && cacheManageItem.Semaphore.CurrentCount == 1)
         {
             _ = Task.Run(() => GetValueFromSource(key, getValue, expirationInSecond));
@@ -23,7 +23,7 @@ public class CustomLazyCache : ICustomCache
 
         return value as T;
     }
-    
+
     private async ValueTask<T> GetValueFromSource<T>(string key, Func<Task<T>> getValue, int? expirationInSecond) where T : class
     {
         var cacheManageItem = GetOrCreateCacheItem(key);
@@ -55,6 +55,11 @@ public class CustomLazyCache : ICustomCache
     {
         CacheManageItem cacheManageItem;
 
+        if (CacheManageDictionary.TryGetValue(key, out cacheManageItem))
+        {
+            return cacheManageItem;
+        }
+        
         var tempItem = new CacheManageItem(TimeSpan.Zero);
         var added = CacheManageDictionary.TryAdd(key, tempItem);
         if (added)
