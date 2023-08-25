@@ -18,7 +18,7 @@ public class CustomLazyCache : ICustomCache
 
         if (cacheManageItem.IsExpired() && cacheManageItem.Semaphore.CurrentCount == 1)
         {
-            _ = Task.Run(() => GetValueFromSource(key, getValue, expirationInSecond));
+            ThreadPool.QueueUserWorkItem(_ => GetValueFromSource(key, getValue, expirationInSecond));
         }
 
         return value as T;
