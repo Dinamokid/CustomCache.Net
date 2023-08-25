@@ -4,6 +4,9 @@ using Microsoft.Extensions.Caching.Memory;
 using NBomber.CSharp;
 using NonBlocking;
 
+// ThreadPool.SetMaxThreads(Environment.ProcessorCount, 255);
+// ThreadPool.SetMinThreads(Environment.ProcessorCount, 255);
+
 ConcurrentDictionary<string, SemaphoreSlim> semaphoreDictionary = new();
 ConcurrentDictionary<string, string> cache = new();
 ConcurrentDictionary<string, Lazy<Task<string>>> cacheLazy = new();

@@ -60,10 +60,10 @@ public class CustomLazyCacheTests
         var task1 = cache.GetOrSetAsync(Guid.NewGuid().ToString(), GetValue, 10);
         var task2 = cache.GetOrSetAsync(Guid.NewGuid().ToString(), GetValue, 10);
 
-        await Task.WhenAll(task1, task2);
+        await Task.WhenAll(task1.AsTask(), task2.AsTask());
 
-        var result1 = await task1;
-        var result2 = await task2;
+        var result1 = task1.Result;
+        var result2 = task2.Result;
         
         Assert.That(_fetchCount, Is.EqualTo(2));
         Assert.That(result1, Is.Not.EqualTo(result2));

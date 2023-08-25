@@ -7,7 +7,7 @@ public class CustomLazyCache : ICustomCache
     private static readonly MemoryCache Cache = new(new MemoryCacheOptions());
     private static readonly ConcurrentDictionary<string, CacheManageItem> CacheManageDictionary = new();
 
-    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
+    public async ValueTask<T> GetOrSetAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond = null) where T : class
     {
         var value = Cache.Get(key);
 
