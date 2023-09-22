@@ -1,4 +1,5 @@
-﻿using NonBlocking;
+﻿using System.Runtime.CompilerServices;
+using NonBlocking;
 namespace CustomCache;
 
 public sealed class SingleEntrySemaphore : IDisposable
@@ -22,18 +23,18 @@ public sealed class SingleEntrySemaphore : IDisposable
         Dispose(false);
     }
 
-    public async Task<IAsyncDisposable> WaitAsync(CancellationToken ct = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Task WaitAsync(CancellationToken ct = default)
     {
         Interlocked.Increment(ref _uses);
-        await _semaphore.WaitAsync(ct);
-        return new Section(this);
+        return _semaphore.WaitAsync(ct);
     }
 
-    public IDisposable Wait(CancellationToken ct = default)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Wait(CancellationToken ct = default)
     {
         Interlocked.Increment(ref _uses);
         _semaphore.Wait(ct);
-        return new Section(this);
     }
 
     public bool IsAvailable
@@ -68,20 +69,5 @@ public sealed class SingleEntrySemaphore : IDisposable
     {
         Dispose(true);
         GC.SuppressFinalize(this);
-    }
-
-    private sealed class Section : IAsyncDisposable, IDisposable
-    {
-        private readonly SingleEntrySemaphore _semaphore;
-
-        public Section(SingleEntrySemaphore semaphore) => _semaphore = semaphore;
-
-        public ValueTask DisposeAsync()
-        {
-            _semaphore.Release();
-            return ValueTask.CompletedTask;
-        }
-
-        public void Dispose() => _semaphore.Release();
     }
 }

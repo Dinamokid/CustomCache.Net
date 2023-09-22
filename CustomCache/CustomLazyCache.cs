@@ -79,27 +79,43 @@ public class CustomLazyCache
     private async ValueTask<T> GetValueFromSourceAsync<T>(string key, Func<Task<T>> getValue, int? expirationInSecond, bool forceSet = false) where T : class
     {
         var semaphore = GetOrCreateSemaphoreEntry(key);
-        await using var _ = await semaphore.WaitAsync();
-        if (TryGetCached(key, forceSet, out T cacheItemValue))
+        
+        await semaphore.WaitAsync();
+        try
         {
-            return cacheItemValue;
-        }
+            if (TryGetCached(key, forceSet, out T cacheItemValue))
+            {
+                return cacheItemValue;
+            }
 
-        var value = await getValue();
-        return SetValue(key, value, expirationInSecond);
+            var value = await getValue();
+            return SetValue(key, value, expirationInSecond);
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     private T GetValueFromSource<T>(string key, Func<T> getValue, int? expirationInSecond, bool forceSet = false) where T : class
     {
         var semaphore = GetOrCreateSemaphoreEntry(key);
-        using var _ = semaphore.Wait();
-        if (TryGetCached(key, forceSet, out T cacheItemValue))
+        
+        semaphore.Wait();
+        try
         {
-            return cacheItemValue;
-        }
+            if (TryGetCached(key, forceSet, out T cacheItemValue))
+            {
+                return cacheItemValue;
+            }
 
-        var value = getValue();
-        return SetValue(key, value, expirationInSecond);
+            var value = getValue();
+            return SetValue(key, value, expirationInSecond);
+        }
+        finally
+        {
+            semaphore.Release();
+        }
     }
 
     private static bool TryGetCached<T>(string key, bool forceSet, out T cacheItemValue) where T : class
@@ -191,7 +207,6 @@ public class CustomLazyCache
 
         private static ConstructorInfo GetTargetTypeConstructor(Type valueType) =>
             typeof(CacheItem<>).MakeGenericType(valueType)
-                .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-                .First();
+                .GetConstructors(BindingFlags.Public | BindingFlags.Instance)[0];
     }
 }
