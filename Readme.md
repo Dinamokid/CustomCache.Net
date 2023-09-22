@@ -35,7 +35,7 @@ data (KB): mean = 0.000, max = 0.000, all = 0.0 MB
 
 # Custom semaphore lazy cache (111 fetches)
 ```
-requests: all = 71400809, ok = 71400809, fail = 0, RPS = 1190013.5/s
+requests: all = 71_400_809, ok = 71400809, fail = 0, RPS = 1190013.5/s
 latency (ms): min = 0, mean = 0.04, max = 2408.09
 latency percentile (ms): p50 = 0, p75 = 0, p95 = 0, p99 = 0.02
 data (KB): mean = 0.000, max = 0.000, all = 0.0 MB
