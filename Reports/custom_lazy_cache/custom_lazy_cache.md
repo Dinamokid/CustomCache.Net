@@ -4,13 +4,13 @@ test suite: `nbomber_default_test_suite_name`
 
 test name: `nbomber_default_test_name`
 
-session id: `2023-09-21_13.49.92_session_f8f95ed7`
+session id: `2023-09-22_09.58.65_session_ca28ce6a`
 
 > scenario stats
 
 scenario: `getOrSetCustomLazyCache`
 
-  - ok count: `71400809`
+  - ok count: `77260145`
 
   - fail count: `0`
 
@@ -25,8 +25,8 @@ load simulations:
 |step|ok stats|
 |---|---|
 |name|`global information`|
-|request count|all = `71400809`, ok = `71400809`, RPS = `1190013,5`|
-|latency|min = `0`, mean = `0,04`, max = `2408,09`, StdDev = `2,87`|
+|request count|all = `77260145`, ok = `77260145`, RPS = `1287669,1`|
+|latency|min = `0`, mean = `0,04`, max = `4727,11`, StdDev = `3,55`|
 |latency percentile|p50 = `0`, p75 = `0`, p95 = `0`, p99 = `0,02`|
 
 

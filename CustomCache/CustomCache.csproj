@@ -11,4 +11,10 @@
       <PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\Readme.md">
+        <Link>Readme.md</Link>
+      </Content>
+    </ItemGroup>
+
 </Project>
