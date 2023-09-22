@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using NonBlocking;
+﻿using NonBlocking;
 namespace CustomCache;
 
 public sealed class SingleEntrySemaphore : IDisposable
@@ -23,14 +22,12 @@ public sealed class SingleEntrySemaphore : IDisposable
         Dispose(false);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task WaitAsync(CancellationToken ct = default)
     {
         Interlocked.Increment(ref _uses);
         return _semaphore.WaitAsync(ct);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Wait(CancellationToken ct = default)
     {
         Interlocked.Increment(ref _uses);
